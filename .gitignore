@@ -1,0 +1,17 @@
+.env
+knowledge-base/hacktricks/
+knowledge-base/payloads/
+knowledge-base/nuclei-templates/
+knowledge-base/gtfobins/
+knowledge-base/lolbas/
+qdrant_data/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+.DS_Store
+Thumbs.db

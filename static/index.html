@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>R4GV1S</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+
+    :root {
+      --bg:        #0c0c10;
+      --bg-panel:  #101016;
+      --bg-input:  #14141c;
+      --border:    #1c1c28;
+      --border-hi: #2a2a40;
+      --accent:    #39ff8f;
+      --accent-lo: rgba(57,255,143,0.08);
+      --accent-md: rgba(57,255,143,0.18);
+      --blue:      #4fc3f7;
+      --blue-lo:   rgba(79,195,247,0.08);
+      --text:      #b8b8d0;
+      --text-hi:   #e0e0f0;
+      --text-lo:   #404058;
+      --text-mid:  #6868a0;
+      --red:       #ff5566;
+      --radius:    6px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      overflow: hidden;
+    }
+
+    /* ─── LAYOUT ─── */
+    .shell {
+      display: grid;
+      grid-template-rows: 44px 1fr auto;
+      height: 100vh;
+    }
+
+    /* ─── TOPBAR ─── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-panel);
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .wordmark {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 3px;
+      color: var(--accent);
+    }
+
+    .sep { color: var(--text-lo); }
+
+    .badge {
+      font-size: 10px;
+      letter-spacing: 1px;
+      color: var(--text-mid);
+      font-weight: 300;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      letter-spacing: 1px;
+      color: var(--text-mid);
+    }
+
+    .dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+
+    .dot.busy {
+      background: var(--blue);
+      box-shadow: 0 0 6px var(--blue);
+      animation: breathe 1s ease-in-out infinite;
+    }
+
+    .dot.error { background: var(--red); box-shadow: 0 0 6px var(--red); animation: none; }
+
+    @keyframes breathe {
+      0%,100% { opacity: 1; } 50% { opacity: 0.35; }
+    }
+
+    .ghost-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-mid);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1px;
+      padding: 3px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .ghost-btn:hover { color: var(--text); border-color: var(--border-hi); }
+
+    /* ─── CHAT ─── */
+    #chat {
+      overflow-y: auto;
+      padding: 28px 0;
+      display: flex;
+      flex-direction: column;
+      scroll-behavior: smooth;
+    }
+
+    #chat::-webkit-scrollbar { width: 3px; }
+    #chat::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 2px; }
+    #chat::-webkit-scrollbar-track { background: transparent; }
+
+    /* ─── EMPTY ─── */
+    .empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      padding: 40px;
+    }
+
+    .empty-glyph {
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--text-lo);
+      font-weight: 300;
+    }
+
+    .empty-title {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: 6px;
+      color: var(--border-hi);
+    }
+
+    .empty-title em { color: var(--text-lo); font-style: normal; }
+
+    .pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      max-width: 560px;
+    }
+
+    .pill {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      color: var(--text-mid);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .pill:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-lo);
+    }
+
+    /* ─── MESSAGE ─── */
+    .msg {
+      padding: 0 24px;
+      max-width: 860px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .msg + .msg { margin-top: 28px; }
+
+    .msg-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .role-tag {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 3px;
+    }
+
+    .msg.user .role-tag {
+      color: var(--blue);
+      background: var(--blue-lo);
+      border: 1px solid rgba(79,195,247,0.15);
+    }
+
+    .msg.assistant .role-tag {
+      color: var(--accent);
+      background: var(--accent-lo);
+      border: 1px solid rgba(57,255,143,0.15);
+    }
+
+    .msg-time {
+      font-size: 10px;
+      color: var(--text-lo);
+      font-weight: 300;
+    }
+
+    /* ─── TOOL CALLS ─── */
+    .tool-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+
+    .tool-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--text-mid);
+      padding: 5px 10px;
+      border-radius: 4px;
+      border: 1px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .tool-item.running {
+      background: var(--blue-lo);
+      border-color: rgba(79,195,247,0.12);
+    }
+
+    .tool-item.done {
+      background: var(--accent-lo);
+      border-color: rgba(57,255,143,0.1);
+      color: var(--text-lo);
+    }
+
+    .tool-item.done .tool-icon { color: var(--accent); }
+
+    .spinner {
+      width: 10px; height: 10px;
+      border: 1.5px solid var(--blue);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .tool-icon { font-size: 11px; flex-shrink: 0; }
+
+    .tool-query {
+      font-style: italic;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ─── CONTENT ─── */
+    .msg-body {
+      color: var(--text);
+      line-height: 1.75;
+    }
+
+    .msg.user .msg-body {
+      color: var(--text-mid);
+      font-weight: 300;
+    }
+
+    /* markdown */
+    .msg-body h1, .msg-body h2, .msg-body h3 {
+      font-family: 'IBM Plex Sans', sans-serif;
+      color: var(--text-hi);
+      margin: 18px 0 8px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+
+    .msg-body h1 { font-size: 16px; }
+    .msg-body h2 { font-size: 14px; }
+    .msg-body h3 { font-size: 13px; color: var(--text); }
+
+    .msg-body p { margin-bottom: 10px; }
+    .msg-body p:last-child { margin-bottom: 0; }
+
+    .msg-body ul, .msg-body ol {
+      padding-left: 18px;
+      margin-bottom: 10px;
+    }
+
+    .msg-body li { margin-bottom: 3px; }
+
+    .msg-body strong { color: var(--text-hi); font-weight: 500; }
+
+    .msg-body code:not(pre code) {
+      background: #111118;
+      border: 1px solid var(--border-hi);
+      color: var(--accent);
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 12px;
+    }
+
+    .msg-body pre {
+      background: #080b0a !important;
+      border: 1px solid var(--border-hi);
+      border-left: 2px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      overflow-x: auto;
+      margin: 12px 0;
+      position: relative;
+    }
+
+    .msg-body pre::-webkit-scrollbar { height: 3px; }
+    .msg-body pre::-webkit-scrollbar-thumb { background: var(--border-hi); }
+
+    .msg-body pre code { font-size: 12px !important; line-height: 1.65; }
+
+    .copy-btn {
+      position: absolute;
+      top: 8px; right: 8px;
+      background: rgba(57,255,143,0.06);
+      border: 1px solid rgba(57,255,143,0.15);
+      color: var(--text-mid);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 1px;
+      padding: 3px 8px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-transform: uppercase;
+    }
+
+    .copy-btn:hover { color: var(--accent); border-color: rgba(57,255,143,0.3); }
+    .copy-btn.ok { color: var(--accent); }
+
+    /* ─── SOURCES ─── */
+    .sources {
+      margin-top: 14px;
+      padding: 10px 14px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .sources-title {
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-lo);
+      margin-bottom: 8px;
+    }
+
+    .source-row {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      padding: 3px 0;
+      font-size: 11px;
+      color: var(--text-lo);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .source-row:last-child { border-bottom: none; }
+
+    .source-row::before { content: '↗'; font-size: 9px; color: var(--text-lo); }
+
+    .source-title { color: var(--text-mid); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+    .source-file  { color: var(--accent); font-size: 10px; flex-shrink: 0; }
+
+    /* ─── CURSOR ─── */
+    .cursor {
+      display: inline-block;
+      width: 7px; height: 14px;
+      background: var(--accent);
+      vertical-align: text-bottom;
+      animation: blink 1s step-end infinite;
+      margin-left: 1px;
+    }
+
+    @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+
+    /* ─── INPUT ─── */
+    .input-zone {
+      border-top: 1px solid var(--border);
+      background: var(--bg-panel);
+      padding: 14px 24px 16px;
+    }
+
+    .input-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      transition: border-color 0.15s;
+    }
+
+    .input-inner:focus-within { border-color: var(--border-hi); }
+
+    .prompt-sym {
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 14px;
+      flex-shrink: 0;
+      padding-bottom: 1px;
+      user-select: none;
+    }
+
+    #input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text-hi);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      resize: none;
+      max-height: 110px;
+      line-height: 1.55;
+    }
+
+    #input::placeholder { color: var(--text-lo); }
+    #input::-webkit-scrollbar { display: none; }
+
+    .send-btn {
+      background: var(--accent);
+      border: none;
+      color: #050c08;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      padding: 6px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: opacity 0.15s, box-shadow 0.15s;
+      text-transform: uppercase;
+    }
+
+    .send-btn:hover:not(:disabled) { box-shadow: 0 0 14px rgba(57,255,143,0.3); }
+    .send-btn:disabled { opacity: 0.2; cursor: not-allowed; }
+
+    .input-meta {
+      max-width: 860px;
+      margin: 6px auto 0;
+      font-size: 10px;
+      color: var(--text-lo);
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="wordmark">R4GV1S</span>
+      <span class="sep">/</span>
+      <span class="badge">RAG-BASED PENTEST ASSISTANT</span>
+    </div>
+    <div class="topbar-right">
+      <div class="indicator">
+        <div class="dot" id="dot"></div>
+        <span id="status">ready</span>
+      </div>
+      <button class="ghost-btn" onclick="clearChat()">clear</button>
+    </div>
+  </header>
+
+  <!-- CHAT -->
+  <div id="chat">
+    <div class="empty" id="empty">
+      <div class="empty-glyph">// pentest assistant</div>
+      <div class="empty-title">R<em>4</em>GV<em>1</em>S</div>
+      <div class="pills">
+        <div class="pill" onclick="hint(this)">xxe payload</div>
+        <div class="pill" onclick="hint(this)">sqli detection</div>
+        <div class="pill" onclick="hint(this)">linux privesc ilk adımlar</div>
+        <div class="pill" onclick="hint(this)">reverse shell one-liner bash</div>
+        <div class="pill" onclick="hint(this)">nmap full port scan</div>
+        <div class="pill" onclick="hint(this)">ssrf bypass teknikleri</div>
+        <div class="pill" onclick="hint(this)">lfi to rce</div>
+        <div class="pill" onclick="hint(this)">windows token impersonation</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INPUT -->
+  <div class="input-zone">
+    <div class="input-inner">
+      <div class="prompt-sym">›</div>
+      <textarea id="input" rows="1" placeholder="komut veya soru..." oninput="resize(this)" onkeydown="onkey(event)"></textarea>
+      <button class="send-btn" id="sendbtn" onclick="send()">send</button>
+    </div>
+    <div class="input-meta">enter → gönder &nbsp;·&nbsp; shift+enter → yeni satır</div>
+  </div>
+
+</div>
+
+<script>
+// ── CONFIG ──
+const API = '';  // same origin
+let history = [];
+let busy = false;
+
+// ── MARKED ──
+marked.setOptions({ breaks: true, gfm: true });
+
+const renderer = new marked.Renderer();
+renderer.code = function(code, lang) {
+  let html = '';
+  try {
+    html = lang && hljs.getLanguage(lang)
+      ? hljs.highlight(code, { language: lang }).value
+      : hljs.highlightAuto(code).value;
+  } catch { html = code; }
+  const uid = 'c' + Math.random().toString(36).slice(2,8);
+  return `<pre id="${uid}"><button class="copy-btn" onclick="cp('${uid}',this)">copy</button><code class="hljs">${html}</code></pre>`;
+};
+marked.use({ renderer });
+
+// ── HELPERS ──
+function resize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 110) + 'px';
+}
+
+function scrollEnd() {
+  const c = document.getElementById('chat');
+  c.scrollTop = c.scrollHeight;
+}
+
+function setStatus(state, text) {
+  document.getElementById('status').textContent = text;
+  const dot = document.getElementById('dot');
+  dot.className = 'dot' + (state !== 'ready' ? ' ' + state : '');
+}
+
+function ts() {
+  return new Date().toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit' });
+}
+
+function cp(id, btn) {
+  const text = document.getElementById(id).querySelector('code').innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'copied';
+    btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('ok'); }, 1800);
+  });
+}
+
+function hint(el) {
+  document.getElementById('input').value = el.textContent;
+  send();
+}
+
+function onkey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+}
+
+// ── CLEAR ──
+function clearChat() {
+  history = [];
+  document.getElementById('chat').innerHTML = `
+    <div class="empty" id="empty">
+      <div class="empty-glyph">// pentest assistant</div>
+      <div class="empty-title">R<em>4</em>GV<em>1</em>S</div>
+      <div class="pills">
+        <div class="pill" onclick="hint(this)">xxe payload</div>
+        <div class="pill" onclick="hint(this)">sqli detection</div>
+        <div class="pill" onclick="hint(this)">linux privesc ilk adımlar</div>
+        <div class="pill" onclick="hint(this)">reverse shell one-liner bash</div>
+        <div class="pill" onclick="hint(this)">nmap full port scan</div>
+        <div class="pill" onclick="hint(this)">ssrf bypass teknikleri</div>
+        <div class="pill" onclick="hint(this)">lfi to rce</div>
+        <div class="pill" onclick="hint(this)">windows token impersonation</div>
+      </div>
+    </div>`;
+  setStatus('ready', 'ready');
+}
+
+// ── APPEND USER ──
+function appendUser(text) {
+  const empty = document.getElementById('empty');
+  if (empty) empty.remove();
+
+  const chat = document.getElementById('chat');
+  const div = document.createElement('div');
+  div.className = 'msg user';
+  div.innerHTML = `
+    <div class="msg-header">
+      <span class="role-tag">user</span>
+      <span class="msg-time">${ts()}</span>
+    </div>
+    <div class="msg-body">${text.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>`;
+  chat.appendChild(div);
+  scrollEnd();
+}
+
+// ── APPEND ASSISTANT ──
+// Her mesaja unique ID — duplicate ID bugunu önler
+let msgCounter = 0;
+let currentMsgId = null;
+
+function appendAssistant() {
+  msgCounter++;
+  currentMsgId = `msg-${msgCounter}`;
+
+  const chat = document.getElementById('chat');
+  const div = document.createElement('div');
+  div.className = 'msg assistant';
+  div.innerHTML = `
+    <div class="msg-header">
+      <span class="role-tag">r4gv1s</span>
+      <span class="msg-time">${ts()}</span>
+    </div>
+    <div class="tool-list" id="tool-list-${currentMsgId}"></div>
+    <div class="msg-body" id="body-${currentMsgId}"><span class="cursor"></span></div>
+    <div id="sources-${currentMsgId}"></div>`;
+  chat.appendChild(div);
+  scrollEnd();
+}
+
+function addTool(toolId, query) {
+  const list = document.getElementById(`tool-list-${currentMsgId}`);
+  if (!list) return;
+  const div = document.createElement('div');
+  div.className = 'tool-item running';
+  div.id = toolId;
+  div.innerHTML = `<div class="spinner"></div><span class="tool-query">${query}</span>`;
+  list.appendChild(div);
+  scrollEnd();
+}
+
+function doneTool(toolId) {
+  const el = document.getElementById(toolId);
+  if (!el) return;
+  el.className = 'tool-item done';
+  el.innerHTML = `<span class="tool-icon">✓</span><span class="tool-query">${el.querySelector('.tool-query').textContent}</span>`;
+}
+
+function showSources(chunks) {
+  const box = document.getElementById(`sources-${currentMsgId}`);
+  if (!box || !chunks.length) return;
+  let html = `<div class="sources"><div class="sources-title">kaynaklar</div>`;
+  const seen = new Set();
+  chunks.forEach(c => {
+    if (seen.has(c.source)) return;
+    seen.add(c.source);
+    const fname = c.source.split('/').pop();
+    html += `<div class="source-row">
+      <span class="source-title">${c.title}</span>
+      <span class="source-file">${fname}</span>
+    </div>`;
+  });
+  html += '</div>';
+  box.innerHTML = html;
+  scrollEnd();
+}
+
+function getBody() {
+  return document.getElementById(`body-${currentMsgId}`);
+}
+
+// ── SEND ──
+async function send() {
+  if (busy) return;
+  const input = document.getElementById('input');
+  const query = input.value.trim();
+  if (!query) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  busy = true;
+  document.getElementById('sendbtn').disabled = true;
+  setStatus('busy', 'thinking...');
+
+  appendUser(query);
+  appendAssistant();
+
+  let raw = '';
+
+  try {
+    const res = await fetch(`${API}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, history }),
+    });
+
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    let ev = null;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+
+      for (const line of lines) {
+        if (line.startsWith('event: ')) {
+          ev = line.slice(7).trim();
+        } else if (line.startsWith('data: ') && ev) {
+          let data;
+          try { data = JSON.parse(line.slice(6)); } catch { ev = null; continue; }
+
+          if (ev === 'tool_start') {
+            setStatus('busy', 'searching...');
+            addTool(data.id, data.query);
+
+          } else if (ev === 'tool_done') {
+            doneTool(data.id);
+
+          } else if (ev === 'sources') {
+            showSources(data);
+
+            } else if (ev === 'token') {
+              if (raw === '') {
+                getBody().innerHTML = '';
+                setStatus('busy', 'generating...');
+              }
+              raw += data.text;
+              getBody().textContent = raw;
+              scrollEnd();
+
+            } else if (ev === 'done') {
+              getBody().innerHTML = marked.parse(raw);
+              setStatus('ready', 'ready');
+            }
+          ev = null;
+        }
+      }
+    }
+
+    history.push({ role: 'user', content: query });
+    history.push({ role: 'assistant', content: raw });
+
+  } catch (err) {
+    const body = getBody();
+    if (body) body.innerHTML = `<span style="color:var(--red)">[error] ${err.message}</span>`;
+    setStatus('error', 'error');
+  }
+
+  busy = false;
+  document.getElementById('sendbtn').disabled = false;
+  document.getElementById('input').focus();
+}
+</script>
+</body>
+</html>
