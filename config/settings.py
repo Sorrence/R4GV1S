@@ -13,7 +13,7 @@ class Settings:
     # ── LLM ──────────────────────────────────────────────────────────────────
     llm_provider: str   = os.getenv("LLM_PROVIDER", "openrouter")   # ollama | openrouter | openai
     llm_model: str      = os.getenv("LLM_MODEL", "openrouter/free")
-    api_key: str        = os.getenv("API_KEY", "")
+    api_key: str        = os.getenv("API_KEY") or os.getenv("OPENROUTER_API_KEY", "")
     openai_base_url: str = os.getenv("OPENAI_BASE_URL", "https://openrouter.ai/api/v1")
     ollama_base_url: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     temperature: float  = float(os.getenv("TEMPERATURE", "0.2"))

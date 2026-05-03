@@ -14,6 +14,10 @@ import ollama as ollama_client
 import openai
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct
+import sys
+import os
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from config.settings import settings
 
@@ -57,7 +61,10 @@ def chunk_markdown(text: str, source: str) -> Generator[dict, None, None]:
         if len(section) < settings.chunk_min_chars:
             continue
         lines = section.splitlines()
-        title = lines[0].lstrip('#').strip() if lines else "Untitled"
+        # Dosya adını prefix olarak ekle — embedding kalitesini artırır
+        filename = Path(source).stem.replace('-', ' ').replace('_', ' ')
+        raw_title = lines[0].lstrip('#').strip() if lines else ""
+        title = f"{filename} — {raw_title}" if raw_title else filename
         if len(section) > settings.chunk_max_chars:
             for i in range(0, len(section), settings.chunk_max_chars):
                 sub = section[i:i + settings.chunk_max_chars].strip()
