@@ -6,6 +6,7 @@ SSE streaming chat endpoint.
 import json
 import asyncio
 import os
+import sys
 from typing import Optional
 
 import ollama as ollama_client
@@ -17,6 +18,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from qdrant_client import QdrantClient
 from qdrant_client.models import Filter, FieldCondition, MatchText
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from config.settings import settings
 
@@ -95,23 +98,98 @@ def embed(text: str) -> list[float]:
         return resp.data[0].embedding
 
 
+# ── Term → source path pattern map ───────────────────────────────────────────
+TERM_MAP = {
+    "xxe":                   "xxe",
+    "xml external":          "xxe",
+    "sqli":                  "sql-injection",
+    "sql injection":         "sql-injection",
+    "xss":                   "xss",
+    "cross site scripting":  "xss",
+    "ssrf":                  "ssrf",
+    "lfi":                   "lfi",
+    "rfi":                   "rfi",
+    "ssti":                  "ssti",
+    "csrf":                  "csrf",
+    "path traversal":        "traversal",
+    "directory traversal":   "traversal",
+    "command injection":     "command-injection",
+    "cmdi":                  "command-injection",
+    "deserialization":       "deserializ",
+    "jwt":                   "jwt",
+    "oauth":                 "oauth",
+    "privesc":               "privilege-escalation",
+    "privilege escalation":  "privilege-escalation",
+    "reverse shell":         "reverse-shell",
+    "revshell":              "reverse-shell",
+    "open redirect":         "open-redirect",
+    "prototype pollution":   "prototype-pollution",
+    "cors":                  "cors",
+    "graphql":               "graphql",
+    "websocket":             "websocket",
+    "ldap":                  "ldap",
+    "xpath":                 "xpath",
+    "idor":                  "idor",
+    "file upload":           "file-upload",
+    "nmap":                  "nmap",
+    "sqlmap":                "sqlmap",
+    "mimikatz":              "mimikatz",
+    "bloodhound":            "bloodhound",
+    "linpeas":               "linpeas",
+    "winpeas":               "winpeas",
+}
+
+
+def extract_path_keyword(query: str) -> Optional[str]:
+    q = query.lower()
+    for term, pattern in TERM_MAP.items():
+        if term in q:
+            return pattern
+    return None
+
+
 # ── Search ────────────────────────────────────────────────────────────────────
 def search_knowledge_base(query: str, keyword: Optional[str] = None) -> tuple[str, list[dict]]:
     vector = embed(query)
 
-    qdrant_filter = None
-    if keyword:
-        qdrant_filter = Filter(
-            must=[FieldCondition(key="text", match=MatchText(text=keyword))]
+    # Path-based filter takes priority over generic keyword
+    path_kw = extract_path_keyword(query) if not keyword else None
+    path_filter = None
+    if path_kw:
+        path_filter = Filter(
+            must=[FieldCondition(key="source", match=MatchText(text=path_kw))]
         )
 
-    results = qdrant.query_points(
-        collection_name=settings.collection_name,
-        query=vector,
-        limit=settings.top_k,
-        query_filter=qdrant_filter,
-        with_payload=True,
-    ).points
+    # Try path filter first
+    results = []
+    if path_filter:
+        results = qdrant.query_points(
+            collection_name=settings.collection_name,
+            query=vector,
+            limit=settings.top_k,
+            query_filter=path_filter,
+            with_payload=True,
+        ).points
+
+    # Fall back to normal search if not enough results
+    if len(results) < 3:
+        extra_filter = None
+        if keyword:
+            extra_filter = Filter(
+                must=[FieldCondition(key="text", match=MatchText(text=keyword))]
+            )
+        normal = qdrant.query_points(
+            collection_name=settings.collection_name,
+            query=vector,
+            limit=settings.top_k,
+            query_filter=extra_filter,
+            with_payload=True,
+        ).points
+        seen = {str(r.id) for r in results}
+        for r in normal:
+            if str(r.id) not in seen:
+                results.append(r)
+        results = results[:settings.top_k]
 
     if not results:
         return "No results found.", []
