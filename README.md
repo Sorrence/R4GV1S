@@ -10,10 +10,13 @@ R4GV1S uses Retrieval-Augmented Generation (RAG) with agentic tool calling. Inst
 
 ## Features
 
+- **Unified launcher** — single `r4gv1s.py` script to manage everything
+- **Auto service management** — automatically starts Qdrant & Ollama when needed
 - **Agentic search** — the model decides what to search and how many times
 - **Fully local option** — runs entirely offline with Ollama
 - **Cloud option** — OpenRouter free tier supported (no GPU needed)
 - **Streaming UI** — token-by-token output with source attribution
+- **Interactive CLI** — terminal chat with relevancy scores and history
 - **Community knowledge base** — contribute CVEs, methodologies, and tool notes via PR
 - **Hybrid search** — vector similarity + keyword matching
 
@@ -41,29 +44,88 @@ The wizard will:
 - Download knowledge base sources
 - Index everything into Qdrant
 
-### 3. Start
+### 3. Launch
 
 ```bash
 python r4gv1s.py
 ```
 
-This will show an interactive menu. Or use direct commands:
+This opens an interactive menu where you can start the Web UI, CLI chat, index data, check status, and more.
+
+---
+
+## Usage
+
+### Launcher (`r4gv1s.py`)
+
+The unified launcher handles all service management automatically — no need to manually start Docker containers or Ollama.
 
 ```bash
+python r4gv1s.py              # Interactive menu
 python r4gv1s.py start        # Start web UI (auto-starts Qdrant & Ollama)
 python r4gv1s.py cli          # Terminal chat mode
 python r4gv1s.py index [path] # Index knowledge base
-python r4gv1s.py status       # Check all services
+python r4gv1s.py status       # Check all services & configuration
 python r4gv1s.py stop         # Stop services
+python r4gv1s.py setup        # Run installer wizard
 ```
 
-Open `http://localhost:8000` in your browser.
+**Command aliases:** Each command has shortcuts for convenience:
+
+| Command  | Aliases          |
+|----------|------------------|
+| `start`  | `web`, `ui`      |
+| `cli`    | `chat`, `terminal` |
+| `index`  | `reindex`        |
+| `status` | `info`, `check`  |
+| `stop`   | `kill`, `down`   |
+| `setup`  | `install`, `init` |
+
+### Web UI
+
+```bash
+python r4gv1s.py start
+```
+
+Opens at `http://localhost:8000`. Features streaming responses, source attribution, and a modern chat interface.
+
+### CLI Chat
+
+```bash
+python r4gv1s.py cli
+```
+
+Interactive terminal chat with:
+- Relevancy scores for retrieved chunks
+- Chat history (persists during session)
+- Readline support (↑/↓ history, Ctrl+A/E, tab)
+
+CLI commands: `:help`, `:clear`, `:history`, `:scores`, `:exit`
+
+### Single Query
+
+```bash
+python r4gv1s.py cli "how to exploit SSTI in Jinja2"
+```
+
+### Service Status
+
+```bash
+python r4gv1s.py status
+```
+
+Shows a dashboard of:
+- Docker, Qdrant, Ollama status
+- Collection stats (vector count)
+- Pulled models
+- Current `.env` configuration
+- Knowledge base sources
 
 ---
 
 ## Manual Setup
 
-If you prefer to set up manually:
+If you prefer to set up manually without the installer:
 
 ### Dependencies
 
@@ -105,6 +167,8 @@ git clone --depth=1 https://github.com/projectdiscovery/nuclei-templates knowled
 ### Index
 
 ```bash
+python r4gv1s.py index knowledge-base/
+# or directly:
 python src/indexer.py index knowledge-base/
 ```
 
@@ -142,13 +206,15 @@ ollama pull qwen2.5-coder:7b
 ollama pull nomic-embed-text
 ```
 
+> **Tip:** When using `python r4gv1s.py start` or `cli`, missing models are pulled automatically.
+
 ---
 
-## Indexer CLI
+## Indexer
 
 ```bash
 # Index a directory
-python src/indexer.py index knowledge-base/
+python r4gv1s.py index knowledge-base/
 
 # Index a single file
 python src/indexer.py index knowledge-base/cves/CVE-2024-1234.yaml
@@ -158,6 +224,54 @@ python src/indexer.py stats
 
 # Reset (deletes all indexed data)
 python src/indexer.py reset
+```
+
+---
+
+## Project Structure
+
+```
+r4gv1s/
+├── r4gv1s.py              # ⭐ Unified launcher (start here)
+├── installer.py            # First-time setup wizard
+├── requirements.txt        # Python dependencies
+├── .env.example            # Configuration template
+├── src/
+│   ├── api.py              # FastAPI backend (SSE streaming)
+│   ├── cli.py              # Interactive CLI chat
+│   ├── retriever.py        # RAG pipeline (embed → search → generate)
+│   └── indexer.py          # Knowledge base indexer
+├── config/
+│   └── settings.py         # Settings loader (.env)
+├── static/
+│   └── index.html          # Web UI frontend
+└── knowledge-base/         # Knowledge sources (gitignored)
+    ├── _templates/          # Contribution templates
+    ├── cves/                # CVE entries (yaml)
+    ├── methodologies/       # Attack methodologies (markdown)
+    └── tools/               # Tool usage notes (markdown)
+```
+
+---
+
+## Architecture
+
+```
+User Query
+    │
+    ▼
+r4gv1s.py (launcher)
+    │
+    ├─► Web UI ─► FastAPI (SSE stream)
+    │                │
+    └─► CLI Chat ────┤
+                     │
+                     ├─► Tool Call Loop (agentic)
+                     │       │
+                     │       ├─► nomic-embed-text (Ollama) → vector
+                     │       └─► Qdrant similarity search → chunks
+                     │
+                     └─► LLM (OpenRouter / Ollama) → streaming answer
 ```
 
 ---
@@ -175,41 +289,7 @@ python src/indexer.py reset
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
-### Knowledge Base Structure
-
-```
-knowledge-base/
-├── _templates/          # Contribution templates
-│   ├── cve-template.yaml
-│   └── methodology-template.md
-├── cves/                # CVE entries (yaml)
-│   └── 2024/
-├── methodologies/       # Attack methodologies (markdown)
-│   ├── web/
-│   ├── network/
-│   └── privesc/
-└── tools/               # Tool usage notes (markdown)
-```
-
 > **Note:** HackTricks, PayloadsAllTheThings, and Nuclei Templates are not bundled due to licensing. The installer clones them locally.
-
----
-
-## Architecture
-
-```
-User Query
-    │
-    ▼
-FastAPI (SSE stream)
-    │
-    ├─► Tool Call Loop (agentic)
-    │       │
-    │       ├─► nomic-embed-text (Ollama) → vector
-    │       └─► Qdrant similarity search → chunks
-    │
-    └─► LLM (OpenRouter / Ollama) → streaming answer
-```
 
 ---
 
