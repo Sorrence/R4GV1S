@@ -44,7 +44,17 @@ The wizard will:
 ### 3. Start
 
 ```bash
-python -m uvicorn src.api:app --host 127.0.0.1 --port 8000
+python r4gv1s.py
+```
+
+This will show an interactive menu. Or use direct commands:
+
+```bash
+python r4gv1s.py start        # Start web UI (auto-starts Qdrant & Ollama)
+python r4gv1s.py cli          # Terminal chat mode
+python r4gv1s.py index [path] # Index knowledge base
+python r4gv1s.py status       # Check all services
+python r4gv1s.py stop         # Stop services
 ```
 
 Open `http://localhost:8000` in your browser.
