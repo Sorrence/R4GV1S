@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -515,10 +515,10 @@
       <div class="pills">
         <div class="pill" onclick="hint(this)">xxe payload</div>
         <div class="pill" onclick="hint(this)">sqli detection</div>
-        <div class="pill" onclick="hint(this)">linux privesc ilk adımlar</div>
+        <div class="pill" onclick="hint(this)">linux privesc first steps</div>
         <div class="pill" onclick="hint(this)">reverse shell one-liner bash</div>
         <div class="pill" onclick="hint(this)">nmap full port scan</div>
-        <div class="pill" onclick="hint(this)">ssrf bypass teknikleri</div>
+        <div class="pill" onclick="hint(this)">ssrf bypass techniques</div>
         <div class="pill" onclick="hint(this)">lfi to rce</div>
         <div class="pill" onclick="hint(this)">windows token impersonation</div>
       </div>
@@ -529,10 +529,10 @@
   <div class="input-zone">
     <div class="input-inner">
       <div class="prompt-sym">›</div>
-      <textarea id="input" rows="1" placeholder="komut veya soru..." oninput="resize(this)" onkeydown="onkey(event)"></textarea>
+      <textarea id="input" rows="1" placeholder="command or question..." oninput="resize(this)" onkeydown="onkey(event)"></textarea>
       <button class="send-btn" id="sendbtn" onclick="send()">send</button>
     </div>
-    <div class="input-meta">enter → gönder &nbsp;·&nbsp; shift+enter → yeni satır</div>
+    <div class="input-meta">enter → send &nbsp;·&nbsp; shift+enter → new line</div>
   </div>
 
 </div>
@@ -608,10 +608,10 @@ function clearChat() {
       <div class="pills">
         <div class="pill" onclick="hint(this)">xxe payload</div>
         <div class="pill" onclick="hint(this)">sqli detection</div>
-        <div class="pill" onclick="hint(this)">linux privesc ilk adımlar</div>
+        <div class="pill" onclick="hint(this)">linux privesc first steps</div>
         <div class="pill" onclick="hint(this)">reverse shell one-liner bash</div>
         <div class="pill" onclick="hint(this)">nmap full port scan</div>
-        <div class="pill" onclick="hint(this)">ssrf bypass teknikleri</div>
+        <div class="pill" onclick="hint(this)">ssrf bypass techniques</div>
         <div class="pill" onclick="hint(this)">lfi to rce</div>
         <div class="pill" onclick="hint(this)">windows token impersonation</div>
       </div>
@@ -682,7 +682,7 @@ function doneTool(toolId) {
 function showSources(chunks) {
   const box = document.getElementById(`sources-${currentMsgId}`);
   if (!box || !chunks.length) return;
-  let html = `<div class="sources"><div class="sources-title">kaynaklar</div>`;
+  let html = `<div class="sources"><div class="sources-title">sources</div>`;
   const seen = new Set();
   chunks.forEach(c => {
     if (seen.has(c.source)) return;

@@ -284,12 +284,12 @@ async def event_stream(query: str, history: list[dict]):
         stream=True,
     )
 
-    # Stream'i async loop'ta oku
+    # Read stream in async loop
     for chunk in response:
         delta = chunk.choices[0].delta
         if delta.content:
             yield f"event: token\ndata: {json.dumps({'text': delta.content})}\n\n"
-            # Her token'dan sonra event loop'a dön
+            # Yield to event loop after each token
             await asyncio.sleep(0)
 
     yield f"event: done\ndata: {{}}\n\n"

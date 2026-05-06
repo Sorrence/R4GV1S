@@ -61,7 +61,7 @@ def chunk_markdown(text: str, source: str) -> Generator[dict, None, None]:
         if len(section) < settings.chunk_min_chars:
             continue
         lines = section.splitlines()
-        # Dosya adını prefix olarak ekle — embedding kalitesini artırır
+        # Add filename as prefix — improves embedding quality
         filename = Path(source).stem.replace('-', ' ').replace('_', ' ')
         raw_title = lines[0].lstrip('#').strip() if lines else ""
         title = f"{filename} — {raw_title}" if raw_title else filename

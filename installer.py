@@ -298,12 +298,12 @@ def main():
   ╚══════════════════════════════════════╝{NC}
 
   Start the web UI:
-  {C}python -m uvicorn src.api:app --host 127.0.0.1 --port 8000{NC}
+  {C}python r4gv1s.py start{NC}
 
   Then open: {C}http://localhost:8000{NC}
 
   Re-index anytime:
-  {C}python src/indexer.py index knowledge-base/{NC}
+  {C}python r4gv1s.py index knowledge-base/{NC}
 """)
 
 

@@ -120,15 +120,15 @@ def is_webui_running() -> bool:
 def ensure_qdrant() -> bool:
     """Start Qdrant if not running. Returns True if ready."""
     if is_qdrant_running():
-        ok("Qdrant zaten çalışıyor")
+        ok("Qdrant is already running")
         return True
 
     if not check_docker():
-        err("Docker bulunamadı! Qdrant için Docker gerekli.")
-        err("Yükleme: https://docs.docker.com/get-docker/")
+        err("Docker not found! Docker is required for Qdrant.")
+        err("Install: https://docs.docker.com/get-docker/")
         return False
 
-    info("Qdrant başlatılıyor...")
+    info("Starting Qdrant...")
 
     # Check if container exists but is stopped
     result = run_silent("docker ps -a --format '{{.Names}}'")
@@ -144,25 +144,25 @@ def ensure_qdrant() -> bool:
         )
 
     if wait_for_port("localhost", 6333, timeout=30):
-        ok("Qdrant hazır (port 6333)")
+        ok("Qdrant ready (port 6333)")
         return True
     else:
-        err("Qdrant başlatılamadı!")
+        err("Failed to start Qdrant!")
         return False
 
 
 def ensure_ollama() -> bool:
     """Start Ollama if not running. Returns True if ready."""
     if is_ollama_running():
-        ok("Ollama zaten çalışıyor")
+        ok("Ollama is already running")
         return True
 
     if not check_ollama():
-        warn("Ollama bulunamadı. Sadece embedding için gerekli.")
-        warn("Yükleme: curl -fsSL https://ollama.com/install.sh | sh")
+        warn("Ollama not found. Only required for embedding.")
+        warn("Install: curl -fsSL https://ollama.com/install.sh | sh")
         return False
 
-    info("Ollama başlatılıyor...")
+    info("Starting Ollama...")
     subprocess.Popen(
         ["ollama", "serve"],
         stdout=subprocess.DEVNULL,
@@ -171,21 +171,21 @@ def ensure_ollama() -> bool:
     )
 
     if wait_for_port("localhost", 11434, timeout=20):
-        ok("Ollama hazır (port 11434)")
+        ok("Ollama ready (port 11434)")
         return True
     else:
-        err("Ollama başlatılamadı!")
+        err("Failed to start Ollama!")
         return False
 
 
 def ensure_services() -> bool:
     """Start all required services."""
-    print(f"\n{B}── Servisler ──────────────────────────────────────────{NC}")
+    print(f"\n{B}── Services ───────────────────────────────────────────{NC}")
     qdrant_ok = ensure_qdrant()
     ollama_ok = ensure_ollama()
 
     if not qdrant_ok:
-        err("Qdrant olmadan devam edilemez!")
+        err("Cannot continue without Qdrant!")
         return False
 
     env = load_env()
@@ -193,7 +193,7 @@ def ensure_services() -> bool:
     embed_provider = env.get("EMBED_PROVIDER", "ollama")
 
     if not ollama_ok and embed_provider == "ollama":
-        err("Embedding provider 'ollama' ama Ollama çalışmıyor!")
+        err("Embedding provider is 'ollama' but Ollama is not running!")
         return False
 
     # Check if embedding model is pulled
@@ -201,7 +201,7 @@ def ensure_services() -> bool:
         embed_model = env.get("EMBED_MODEL", "nomic-embed-text")
         result = run_silent("ollama list")
         if embed_model not in result.stdout:
-            info(f"Embedding modeli çekiliyor: {embed_model}...")
+            info(f"Pulling embedding model: {embed_model}...")
             subprocess.run(["ollama", "pull", embed_model], check=False)
 
     # Check if LLM model is pulled (only for Ollama provider)
@@ -209,7 +209,7 @@ def ensure_services() -> bool:
         llm_model = env.get("LLM_MODEL", "qwen2.5-coder:7b")
         result = run_silent("ollama list")
         if llm_model not in result.stdout:
-            info(f"LLM modeli çekiliyor: {llm_model}...")
+            info(f"Pulling LLM model: {llm_model}...")
             subprocess.run(["ollama", "pull", llm_model], check=False)
 
     return True
@@ -219,8 +219,8 @@ def ensure_services() -> bool:
 def cmd_start():
     """Start the web UI with auto service management."""
     if not ENV_FILE.exists():
-        err(".env dosyası bulunamadı!")
-        info("Önce kurulumu çalıştırın: python r4gv1s.py setup")
+        err(".env file not found!")
+        info("Run the installer first: python r4gv1s.py setup")
         return
 
     if not ensure_services():
@@ -231,8 +231,8 @@ def cmd_start():
     port = env.get("PORT", "8000")
 
     print(f"\n{B}── Web UI ─────────────────────────────────────────────{NC}")
-    ok(f"Tarayıcıda açın: {C}http://{host}:{port}{NC}")
-    info(f"Durdurmak için: {Y}Ctrl+C{NC}")
+    ok(f"Open in browser: {C}http://{host}:{port}{NC}")
+    info(f"To stop: {Y}Ctrl+C{NC}")
     print()
 
     try:
@@ -242,14 +242,14 @@ def cmd_start():
             cwd=str(ROOT),
         )
     except KeyboardInterrupt:
-        print(f"\n\n  {GRAY}Web UI durduruldu.{NC}\n")
+        print(f"\n\n  {GRAY}Web UI stopped.{NC}\n")
 
 
 def cmd_cli():
     """Start the CLI chat with auto service management."""
     if not ENV_FILE.exists():
-        err(".env dosyası bulunamadı!")
-        info("Önce kurulumu çalıştırın: python r4gv1s.py setup")
+        err(".env file not found!")
+        info("Run the installer first: python r4gv1s.py setup")
         return
 
     if not ensure_services():
@@ -263,7 +263,7 @@ def cmd_cli():
             cwd=str(ROOT),
         )
     except KeyboardInterrupt:
-        print(f"\n\n  {GRAY}CLI durduruldu.{NC}\n")
+        print(f"\n\n  {GRAY}CLI stopped.{NC}\n")
 
 
 def cmd_index(path: str = None):
@@ -274,14 +274,14 @@ def cmd_index(path: str = None):
     target = path or str(KB_DIR)
 
     if not Path(target).exists():
-        err(f"Yol bulunamadı: {target}")
+        err(f"Path not found: {target}")
         if target == str(KB_DIR):
-            info("Knowledge base henüz indirilmemiş.")
-            info("Çalıştırın: python r4gv1s.py setup")
+            info("Knowledge base has not been downloaded yet.")
+            info("Run: python r4gv1s.py setup")
         return
 
-    print(f"\n{B}── İndeksleme ─────────────────────────────────────────{NC}")
-    info(f"Hedef: {target}")
+    print(f"\n{B}── Indexing ───────────────────────────────────────────{NC}")
+    info(f"Target: {target}")
     print()
 
     subprocess.run(
@@ -292,7 +292,7 @@ def cmd_index(path: str = None):
 
 def cmd_status():
     """Show status of all services."""
-    print(f"\n{B}── Servis Durumu ───────────────────────────────────────{NC}\n")
+    print(f"\n{B}── Service Status ──────────────────────────────────────{NC}\n")
 
     env = load_env()
     provider = env.get("LLM_PROVIDER", "?")
@@ -301,13 +301,13 @@ def cmd_status():
 
     # Docker
     if check_docker():
-        ok(f"Docker               {DIM}yüklü{NC}")
+        ok(f"Docker               {DIM}installed{NC}")
     else:
-        err(f"Docker               {DIM}bulunamadı{NC}")
+        err(f"Docker               {DIM}not found{NC}")
 
     # Qdrant
     if is_qdrant_running():
-        ok(f"Qdrant               {DIM}çalışıyor (port 6333){NC}")
+        ok(f"Qdrant               {DIM}running (port 6333){NC}")
         # Show collection stats
         try:
             sys.path.insert(0, str(ROOT))
@@ -318,16 +318,16 @@ def cmd_status():
             )
             coll = env.get("COLLECTION_NAME", "pentest_kb")
             info_data = q.get_collection(coll)
-            ok(f"  Koleksiyon          {DIM}{coll} ({info_data.points_count} vektör){NC}")
+            ok(f"  Collection          {DIM}{coll} ({info_data.points_count} vectors){NC}")
         except Exception:
-            warn(f"  Koleksiyon          {DIM}okunamadı{NC}")
+            warn(f"  Collection          {DIM}could not be read{NC}")
     else:
-        err(f"Qdrant               {DIM}çalışmıyor{NC}")
+        err(f"Qdrant               {DIM}not running{NC}")
 
     # Ollama
     if check_ollama():
         if is_ollama_running():
-            ok(f"Ollama               {DIM}çalışıyor (port 11434){NC}")
+            ok(f"Ollama               {DIM}running (port 11434){NC}")
             # Show pulled models
             result = run_silent("ollama list")
             if result.returncode == 0:
@@ -337,28 +337,28 @@ def cmd_status():
                     if name:
                         models.append(name)
                 if models:
-                    info(f"  Modeller            {DIM}{', '.join(models[:5])}{NC}")
+                    info(f"  Models              {DIM}{', '.join(models[:5])}{NC}")
         else:
-            warn(f"Ollama               {DIM}yüklü ama çalışmıyor{NC}")
+            warn(f"Ollama               {DIM}installed but not running{NC}")
     else:
-        warn(f"Ollama               {DIM}bulunamadı{NC}")
+        warn(f"Ollama               {DIM}not found{NC}")
 
     # Web UI
     webui_port = int(env.get("PORT", "8000"))
     if is_port_open("127.0.0.1", webui_port):
-        ok(f"Web UI               {DIM}çalışıyor (port {webui_port}){NC}")
+        ok(f"Web UI               {DIM}running (port {webui_port}){NC}")
     else:
-        info(f"Web UI               {DIM}çalışmıyor{NC}")
+        info(f"Web UI               {DIM}not running{NC}")
 
     # Config
-    print(f"\n{B}── Yapılandırma ────────────────────────────────────────{NC}\n")
+    print(f"\n{B}── Configuration ───────────────────────────────────────{NC}\n")
     if ENV_FILE.exists():
-        ok(f".env                 {DIM}mevcut{NC}")
+        ok(f".env                 {DIM}exists{NC}")
         info(f"  LLM Provider        {DIM}{provider}{NC}")
         info(f"  LLM Model           {DIM}{llm_model}{NC}")
         info(f"  Embed Model         {DIM}{embed_model}{NC}")
     else:
-        err(f".env                 {DIM}bulunamadı{NC}")
+        err(f".env                 {DIM}not found{NC}")
 
     # Knowledge base
     print(f"\n{B}── Knowledge Base ──────────────────────────────────────{NC}\n")
@@ -367,33 +367,33 @@ def cmd_status():
         if kb_dirs:
             for d in sorted(kb_dirs):
                 file_count = sum(1 for _ in d.rglob("*") if _.is_file())
-                ok(f"  {d.name:<22} {DIM}{file_count} dosya{NC}")
+                ok(f"  {d.name:<22} {DIM}{file_count} files{NC}")
         else:
-            warn("  Kaynak dizini boş")
+            warn("  Source directory is empty")
     else:
-        warn("  knowledge-base/ dizini bulunamadı")
+        warn("  knowledge-base/ directory not found")
 
     print()
 
 
 def cmd_stop():
     """Stop all running services."""
-    print(f"\n{B}── Servisleri Durdur ───────────────────────────────────{NC}\n")
+    print(f"\n{B}── Stop Services ───────────────────────────────────────{NC}\n")
 
     # Stop Qdrant
     if check_docker():
         result = run_silent("docker ps --format '{{.Names}}'")
         if "qdrant" in result.stdout:
-            info("Qdrant durduruluyor...")
+            info("Stopping Qdrant...")
             run_silent("docker stop qdrant")
-            ok("Qdrant durduruldu")
+            ok("Qdrant stopped")
         else:
-            info("Qdrant zaten durmuş")
+            info("Qdrant is already stopped")
 
     # Note: We don't stop Ollama since other apps might use it
     if is_ollama_running():
-        warn("Ollama çalışıyor — başka uygulamalar kullanıyor olabilir")
-        warn("Manuel durdurmak için: systemctl stop ollama")
+        warn("Ollama is running — other applications might be using it")
+        warn("To stop manually: systemctl stop ollama")
 
     print()
 
@@ -412,30 +412,30 @@ def interactive_menu():
     print(BANNER)
 
     options = [
-        ("Web UI Başlat",       "Servisleri başlat ve tarayıcıda aç",        cmd_start),
-        ("CLI Chat Başlat",     "Terminal üzerinden soru-cevap",              cmd_cli),
-        ("İndeksle",            "Knowledge base'i Qdrant'a indeksle",        lambda: cmd_index()),
-        ("Durum Kontrol",       "Tüm servislerin durumunu göster",           cmd_status),
-        ("Servisleri Durdur",   "Qdrant ve diğer servisleri durdur",         cmd_stop),
-        ("Kurulum Sihirbazı",   "İlk kurulum / yapılandırma",               cmd_setup),
+        ("Start Web UI",        "Start services and open in browser",        cmd_start),
+        ("Start CLI Chat",      "Q&A via terminal",                          cmd_cli),
+        ("Index",               "Index knowledge base into Qdrant",          lambda: cmd_index()),
+        ("Check Status",        "Show status of all services",               cmd_status),
+        ("Stop Services",       "Stop Qdrant and other services",            cmd_stop),
+        ("Setup Wizard",        "Initial setup / configuration",             cmd_setup),
     ]
 
-    print(f"  {B}Ne yapmak istiyorsunuz?{NC}\n")
+    print(f"  {B}What would you like to do?{NC}\n")
     for i, (name, desc, _) in enumerate(options, 1):
         print(f"    {C}{i}.{NC} {B}{name:<22}{NC} {GRAY}{desc}{NC}")
 
-    print(f"\n    {GRAY}0. Çıkış{NC}")
+    print(f"\n    {GRAY}0. Exit{NC}")
     print()
 
     while True:
         try:
-            raw = input(f"  {B}Seçim [1]:{NC} ").strip()
+            raw = input(f"  {B}Choice [1]:{NC} ").strip()
         except (KeyboardInterrupt, EOFError):
-            print(f"\n\n  {GRAY}Çıkış.{NC}\n")
+            print(f"\n\n  {GRAY}Exit.{NC}\n")
             return
 
         if raw == "0":
-            print(f"\n  {GRAY}Çıkış.{NC}\n")
+            print(f"\n  {GRAY}Exit.{NC}\n")
             return
 
         if not raw:
@@ -450,7 +450,7 @@ def interactive_menu():
         except ValueError:
             pass
 
-        warn("Geçersiz seçim, tekrar deneyin.")
+        warn("Invalid choice, please try again.")
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
@@ -481,16 +481,16 @@ def main():
         cmd_setup()
     elif cmd in ("help", "-h", "--help"):
         print(BANNER)
-        print(f"""  {B}Kullanım:{NC}
-    python r4gv1s.py              {GRAY}# İnteraktif menü{NC}
-    python r4gv1s.py start        {GRAY}# Web UI başlat{NC}
-    python r4gv1s.py cli          {GRAY}# CLI chat başlat{NC}
-    python r4gv1s.py index [yol]  {GRAY}# Knowledge base indeksle{NC}
-    python r4gv1s.py status       {GRAY}# Servis durumunu göster{NC}
-    python r4gv1s.py stop         {GRAY}# Servisleri durdur{NC}
-    python r4gv1s.py setup        {GRAY}# Kurulum sihirbazı{NC}
+        print(f"""  {B}Usage:{NC}
+    python r4gv1s.py              {GRAY}# Interactive menu{NC}
+    python r4gv1s.py start        {GRAY}# Start Web UI{NC}
+    python r4gv1s.py cli          {GRAY}# Start CLI chat{NC}
+    python r4gv1s.py index [path] {GRAY}# Index knowledge base{NC}
+    python r4gv1s.py status       {GRAY}# Show service status{NC}
+    python r4gv1s.py stop         {GRAY}# Stop services{NC}
+    python r4gv1s.py setup        {GRAY}# Setup wizard{NC}
 
-  {B}Kısayollar:{NC}
+  {B}Aliases:{NC}
     start  = web, ui
     cli    = chat, terminal
     index  = reindex
@@ -499,8 +499,8 @@ def main():
     setup  = install, init
 """)
     else:
-        err(f"Bilinmeyen komut: {cmd}")
-        info("Yardım için: python r4gv1s.py help")
+        err(f"Unknown command: {cmd}")
+        info("For help: python r4gv1s.py help")
 
 
 if __name__ == "__main__":
