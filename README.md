@@ -246,10 +246,17 @@ r4gv1s/
 ├── static/
 │   └── index.html          # Web UI frontend
 └── knowledge-base/         # Knowledge sources (gitignored)
-    ├── _templates/          # Contribution templates
-    ├── cves/                # CVE entries (yaml)
-    ├── methodologies/       # Attack methodologies (markdown)
-    └── tools/               # Tool usage notes (markdown)
+    ├── community/           # Community contributions (tracked in git)
+    │   ├── _templates/      # Contribution templates
+    │   ├── cves/            # CVE entries (yaml)
+    │   ├── methodologies/   # Attack methodologies (markdown)
+    │   │   ├── web/
+    │   │   ├── network/
+    │   │   ├── privesc/
+    │   │   ├── mobile/
+    │   │   ├── cloud/
+    │   │   └── hardware/
+    │   └── tools/           # Tool usage notes (markdown)
 ```
 
 ---
@@ -278,18 +285,19 @@ r4gv1s.py (launcher)
 
 ## Contributing
 
+Community contributions go under `knowledge-base/community/`. 3rd party sources (HackTricks, PayloadsAllTheThings, etc.) are cloned separately by the installer and gitignored.
+
 ### Adding CVEs or Methodologies
 
 1. Fork the repo
-2. Copy a template from `knowledge-base/_templates/`
+2. Copy a template from `knowledge-base/community/_templates/`
 3. Fill it in and place it under the appropriate folder:
-   - `knowledge-base/cves/YEAR/CVE-YYYY-XXXXX.yaml`
-   - `knowledge-base/methodologies/CATEGORY/your-topic.md`
+   - `knowledge-base/community/cves/CVE-YYYY-XXXXX.yaml`
+   - `knowledge-base/community/methodologies/CATEGORY/your-topic.md`
+   - `knowledge-base/community/tools/toolname.md`
 4. Submit a PR
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
-
-> **Note:** HackTricks, PayloadsAllTheThings, and Nuclei Templates are not bundled due to licensing. The installer clones them locally.
 
 ---
 

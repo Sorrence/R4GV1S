@@ -9,15 +9,41 @@ Thank you for helping improve the knowledge base! Contributions are what make R4
 - **Tool notes** — usage guides, flags, and tips for pentest tools
 - **Bug fixes** — improvements to the codebase
 
+## Knowledge Base Structure
+
+Community contributions live under `knowledge-base/community/`, separated from 3rd party sources (HackTricks, PayloadsAllTheThings, etc.) which are cloned by the installer.
+
+```
+knowledge-base/
+├── community/                      # ← Your contributions go here
+│   ├── _templates/                 # Contribution templates
+│   │   ├── cve-template.yaml
+│   │   └── methodology-template.md
+│   ├── cves/                       # CVE entries (YAML)
+│   ├── methodologies/              # Attack methodologies (Markdown)
+│   │   ├── web/
+│   │   ├── network/
+│   │   ├── privesc/
+│   │   ├── mobile/
+│   │   ├── cloud/
+│   │   └── hardware/
+│   └── tools/                      # Tool usage notes (Markdown)
+│
+├── hacktricks/                     # 3rd party (auto-cloned, gitignored)
+├── payloads/                       # 3rd party (auto-cloned, gitignored)
+├── nuclei-templates/               # 3rd party (auto-cloned, gitignored)
+└── gtfobins/                       # 3rd party (auto-cloned, gitignored)
+```
+
 ## Knowledge Base Contributions
 
 ### CVE Entry
 
-Use the template at `knowledge-base/_templates/cve-template.yaml`.
+Use the template at `knowledge-base/community/_templates/cve-template.yaml`.
 
 Place your file at:
 ```
-knowledge-base/cves/YEAR/CVE-YYYY-XXXXX.yaml
+knowledge-base/community/cves/CVE-YYYY-XXXXX.yaml
 ```
 
 **Required fields:** `id`, `title`, `affected`, `severity`, `tags`, `commands`
@@ -38,11 +64,11 @@ references:
 
 ### Methodology
 
-Use the template at `knowledge-base/_templates/methodology-template.md`.
+Use the template at `knowledge-base/community/_templates/methodology-template.md`.
 
 Place your file at:
 ```
-knowledge-base/methodologies/CATEGORY/your-topic.md
+knowledge-base/community/methodologies/CATEGORY/your-topic.md
 ```
 
 Categories: `web`, `network`, `privesc`, `mobile`, `cloud`, `hardware`
@@ -51,14 +77,14 @@ Categories: `web`, `network`, `privesc`, `mobile`, `cloud`, `hardware`
 
 Place at:
 ```
-knowledge-base/tools/toolname.md
+knowledge-base/community/tools/toolname.md
 ```
 
 ## Pull Request Process
 
 1. Fork the repository
 2. Create a branch: `git checkout -b kb/cve-2024-1234` or `kb/sqli-methodology`
-3. Add your file(s)
+3. Add your file(s) under `knowledge-base/community/`
 4. Make sure YAML files are valid: `python -c "import yaml; yaml.safe_load(open('your-file.yaml'))"`
 5. Submit a PR with a clear title and description
 
