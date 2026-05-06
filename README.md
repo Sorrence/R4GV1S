@@ -24,7 +24,7 @@ R4GV1S uses Retrieval-Augmented Generation (RAG) with agentic tool calling. Inst
 ### 1. Clone
 
 ```bash
-git clone https://github.com/yourusername/r4gv1s
+git clone https://github.com/sorrence/r4gv1s
 cd r4gv1s
 ```
 

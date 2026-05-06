@@ -276,7 +276,7 @@ async def event_stream(query: str, history: list[dict]):
         yield f"event: sources\ndata: {json.dumps(unique)}\n\n"
 
     # Streaming answer
-    stream = await asyncio.to_thread(
+    response = await asyncio.to_thread(
         _llm.chat.completions.create,
         model=settings.llm_model,
         messages=messages,
@@ -284,14 +284,15 @@ async def event_stream(query: str, history: list[dict]):
         stream=True,
     )
 
-    for chunk in stream:
+    # Stream'i async loop'ta oku
+    for chunk in response:
         delta = chunk.choices[0].delta
         if delta.content:
             yield f"event: token\ndata: {json.dumps({'text': delta.content})}\n\n"
+            # Her token'dan sonra event loop'a dön
+            await asyncio.sleep(0)
 
     yield f"event: done\ndata: {{}}\n\n"
-
-
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 @app.post("/chat")
 async def chat(req: ChatRequest):
