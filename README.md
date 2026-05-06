@@ -226,6 +226,8 @@ python src/indexer.py stats
 python src/indexer.py reset
 ```
 
+> **Note:** Indexing the entire knowledge base (especially large repositories like HackTricks) can take a significant amount of time depending on your hardware and embedding model.
+
 ---
 
 ## Project Structure
