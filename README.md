@@ -4,7 +4,7 @@
 
 R4GV1S uses Retrieval-Augmented Generation (RAG) with agentic tool calling. Instead of relying on a model's training data, it searches a local vector database built from HackTricks, PayloadsAllTheThings, Nuclei Templates, and community contributions — then generates accurate, copy-paste ready commands and payloads.
 
-![R4GV1S Screenshot](docs/screenshot.png)
+<img width="1920" height="1106" alt="Ekran Görüntüsü_20260514_212010" src="https://github.com/user-attachments/assets/57f8a2ad-74a1-48a9-b0d8-3b817bf83a0d" />
 
 ---
 
@@ -52,6 +52,8 @@ python r4gv1s.py
 
 This opens an interactive menu where you can start the Web UI, CLI chat, index data, check status, and more.
 
+<img width="1508" height="941" alt="Ekran Görüntüsü_20260514_211401" src="https://github.com/user-attachments/assets/b13f66af-511a-4ee0-b8bb-2ac96c0a812d" />
+
 ---
 
 ## Usage
@@ -89,11 +91,14 @@ python r4gv1s.py start
 
 Opens at `http://localhost:8000`. Features streaming responses, source attribution, and a modern chat interface.
 
+<img width="1920" height="1106" alt="Ekran Görüntüsü_20260514_212010" src="https://github.com/user-attachments/assets/5a951d74-8290-4885-b2e4-46d81f325606" />
+
 ### CLI Chat
 
 ```bash
 python r4gv1s.py cli
 ```
+<img width="2063" height="1249" alt="Ekran Görüntüsü_20260514_212258" src="https://github.com/user-attachments/assets/498aa733-de75-426d-af57-1ca39c23f2b8" />
 
 Interactive terminal chat with:
 - Relevancy scores for retrieved chunks
