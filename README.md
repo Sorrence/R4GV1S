@@ -91,7 +91,7 @@ python r4gv1s.py start
 
 Opens at `http://localhost:8000`. Features streaming responses, source attribution, and a modern chat interface.
 
-<img width="1920" height="1106" alt="Ekran Görüntüsü_20260514_212010" src="https://github.com/user-attachments/assets/5a951d74-8290-4885-b2e4-46d81f325606" />
+<img width="1920" height="1106" alt="Ekran Görüntüsü_20260514_211948" src="https://github.com/user-attachments/assets/34299f6c-3737-4a57-ab93-1f447bc452b1" />
 
 ### CLI Chat
 
