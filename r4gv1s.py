@@ -36,6 +36,9 @@ ROOT = Path(__file__).parent.resolve()
 ENV_FILE = ROOT / ".env"
 KB_DIR = ROOT / "knowledge-base"
 
+# Track whether we started Qdrant so we can stop it on exit
+_qdrant_started_by_us = False
+
 BANNER = f"""
 {C}{B}  ██████╗ ██╗  ██╗ ██████╗ ██╗   ██╗ ██╗███████╗
   ██╔══██╗██║  ██║██╔════╝ ██║   ██║ ██║██╔════╝
@@ -62,12 +65,23 @@ def is_port_open(host: str, port: int) -> bool:
         return False
 
 def wait_for_port(host: str, port: int, timeout: int = 30, label: str = "") -> bool:
-    """Wait until a port becomes available."""
+    """Wait until a port becomes available, showing a spinner."""
+    spinner = ("⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏")
     start = time.time()
+    i = 0
     while time.time() - start < timeout:
         if is_port_open(host, port):
+            if label:
+                # Clear the spinner line
+                print(f"\r\033[K", end="")
             return True
-        time.sleep(1)
+        if label:
+            elapsed = int(time.time() - start)
+            print(f"\r  {C}{spinner[i % len(spinner)]}{NC} {label} {GRAY}({elapsed}s){NC}", end="", flush=True)
+        i += 1
+        time.sleep(0.2)
+    if label:
+        print(f"\r\033[K", end="")
     return False
 
 def run_silent(cmd: str, check: bool = False) -> subprocess.CompletedProcess:
@@ -119,6 +133,8 @@ def is_webui_running() -> bool:
 # ── Service Management ───────────────────────────────────────────────────────
 def ensure_qdrant() -> bool:
     """Start Qdrant if not running. Returns True if ready."""
+    global _qdrant_started_by_us
+
     if is_qdrant_running():
         ok("Qdrant is already running")
         return True
@@ -135,15 +151,16 @@ def ensure_qdrant() -> bool:
     if "qdrant" in result.stdout:
         run_silent("docker start qdrant")
     else:
-        # Create new container
+        # Create new container (no auto-restart — managed by R4GV1S lifecycle)
         qdrant_data = Path.home() / "qdrant_data"
         qdrant_data.mkdir(exist_ok=True)
         run_silent(
-            f"docker run -d --name qdrant --restart unless-stopped "
+            f"docker run -d --name qdrant --restart no "
             f"-p 6333:6333 -v {qdrant_data}:/qdrant/storage qdrant/qdrant"
         )
 
-    if wait_for_port("localhost", 6333, timeout=30):
+    if wait_for_port("localhost", 6333, timeout=30, label="Waiting for Qdrant..."):
+        _qdrant_started_by_us = True
         ok("Qdrant ready (port 6333)")
         return True
     else:
@@ -170,7 +187,7 @@ def ensure_ollama() -> bool:
         start_new_session=True,
     )
 
-    if wait_for_port("localhost", 11434, timeout=20):
+    if wait_for_port("localhost", 11434, timeout=20, label="Waiting for Ollama..."):
         ok("Ollama ready (port 11434)")
         return True
     else:
@@ -215,6 +232,17 @@ def ensure_services() -> bool:
     return True
 
 
+def cleanup_services():
+    """Stop services that were started by us. Safe to call on exit."""
+    global _qdrant_started_by_us
+
+    if _qdrant_started_by_us and check_docker():
+        info("Stopping Qdrant (started by R4GV1S)...")
+        run_silent("docker stop qdrant")
+        ok("Qdrant stopped")
+        _qdrant_started_by_us = False
+
+
 # ── Commands ──────────────────────────────────────────────────────────────────
 def cmd_start():
     """Start the web UI with auto service management."""
@@ -242,7 +270,11 @@ def cmd_start():
             cwd=str(ROOT),
         )
     except KeyboardInterrupt:
-        print(f"\n\n  {GRAY}Web UI stopped.{NC}\n")
+        pass
+    finally:
+        print(f"\n\n  {GRAY}Web UI stopped.{NC}")
+        cleanup_services()
+        print()
 
 
 def cmd_cli():
@@ -263,7 +295,11 @@ def cmd_cli():
             cwd=str(ROOT),
         )
     except KeyboardInterrupt:
-        print(f"\n\n  {GRAY}CLI stopped.{NC}\n")
+        pass
+    finally:
+        print(f"\n\n  {GRAY}CLI stopped.{NC}")
+        cleanup_services()
+        print()
 
 
 def cmd_index(path: str = None):

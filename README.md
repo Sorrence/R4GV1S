@@ -242,7 +242,7 @@ r4gv1s/
 ├── r4gv1s.py              # ⭐ Unified launcher (start here)
 ├── installer.py            # First-time setup wizard
 ├── requirements.txt        # Python dependencies
-├── .env.example            # Configuration template
+├── .env.example            # Conifiguration template
 ├── src/
 │   ├── api.py              # FastAPI backend (SSE streaming)
 │   ├── cli.py              # Interactive CLI chat
